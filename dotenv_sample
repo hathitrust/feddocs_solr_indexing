@@ -1,0 +1,14 @@
+base_path = 
+log_dir_path = 
+log_file = ..../log/solr.update.log
+
+mongo_host =  
+mongo_port =  
+mongo_db   = 
+mongo_coll = registry
+
+solr_host = 
+solr_port = 
+solr_path = /usfeddocs/update/json?commit=true
+
+
