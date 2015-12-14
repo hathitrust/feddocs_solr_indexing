@@ -20,9 +20,15 @@ class SolrIndex
 
   def insert(document)
     begin
+      document.delete("_id")
       resp = @client.post @solr_uri, "[#{document.to_json}]", "content-type"=>"application/json"
+      if resp.status == "400"
+        raise "400"
+      end
       return resp
     rescue
+      puts "Failed!"
+      PP.pp resp
       sleep(1)
       retry
     end
@@ -38,9 +44,10 @@ class SolrIndex
     @update_start_time = Time.now
     recs = self.recs_modified_after @last_updated
     recs.each do | rec |
-      rec['source_records'] = @mc[:registry].find({"id" => 
+      rec['source_records'] = @mc[:source_records].find({"source_id" => 
                                                    {'$in' => rec['source_record_ids']}}
-                                                 ).collect {|s| s['source']}
+                                                 ).collect {|s| s['source'].to_json}
+      rec['id'] = rec['registry_id']
       self.insert rec
     end
     return recs.count
