@@ -21,6 +21,7 @@ class SolrIndex
   def insert(document)
     begin
       document.delete("_id")
+      document['id'] ||= document['registry_id']
       resp = @client.post @solr_uri, "[#{document.to_json}]", "content-type"=>"application/json"
       if resp.status == "400"
         raise "400"
