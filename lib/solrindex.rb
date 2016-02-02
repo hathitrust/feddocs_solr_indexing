@@ -55,7 +55,7 @@ class SolrIndex
   end
 
   def recs_modified_after(start_time)
-    recs = @mc[:registry].find({"lastModified" => {'$gt' => start_time}})
+    recs = @mc[:registry].find({"last_modified" => {'$gt' => start_time}})
     return recs
   end
      
