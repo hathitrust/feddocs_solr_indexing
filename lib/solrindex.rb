@@ -59,6 +59,12 @@ class SolrIndex
                                                  ).collect {|s| s['source_blob']}
             rec['id'] = rec['registry_id']
             rec.delete("_id")
+            #the sorts can't be multivalue
+            ['author_sort', 'pub_date_sort', 'title_sort'].each do | sort |
+              if rec[sort] 
+                rec[sort] = rec[sort][0] 
+              end
+            end
             rec_set << rec.to_json
             if rec_set.count % chunk_size == 0
               self.insert rec_set
