@@ -20,15 +20,20 @@ class SolrIndex
 
   def insert(documents)
     begin
-      chunk = '['+documents.join(',')+']'
-      resp = @client.post @solr_uri, chunk, "content-type"=>"application/json"
+      #chunk = '['+documents.join(',')+']'
+      resp = @client.post @solr_uri, documents.to_json, "content-type"=>"application/json"
       if resp.status == "400"
         raise "400"
+      elsif resp.status == "200"
+        PP.pp resp
+	STDOUT.flush
       end
       return resp
-    rescue
-      puts "Failed!"
+    rescue => error
+      PP.pp error
+      PP.pp documents.collect {|s| s['registry_id'] }
       PP.pp resp
+      STDOUT.flush
       sleep(1)
       retry
     end
@@ -42,21 +47,27 @@ class SolrIndex
 
   def update
     @update_start_time = Time.now
-    recs = self.recs_modified_after(@last_updated).each
     queue = Queue.new
+    count = 0
+    self.recs_modified_after(@last_updated).each do |r|
+    open('missing_regids.txt').each do | l |
+      queue << r['registry_id'] 
+    end
 
-    thread_pool = (0...8).map do 
+    thread_pool = (0...4).map do 
       Thread.new do
         begin 
-          chunk_size = 20
+          chunk_size = 10
           rec_set = []
           chunk = ''
           mc = Mongo::Client.new([@mongo_uri], :database => ENV['mongo_db'])
           while !queue.empty?
-            rec = queue.pop
+            rec_id = queue.pop
+            rec = mc[:registry].find({"registry_id" => rec_id }).first
             rec['source_records'] = mc[:source_records].find({"source_id" => 
                                                    {'$in' => rec['source_record_ids']}}
-                                                 ).collect {|s| s['source_blob']}
+                                                 ).collect {|s| s['source'].to_json }
+            rec['marc_display'] = rec['source_records'][0]
             rec['id'] = rec['registry_id']
             rec.delete("_id")
             #the sorts can't be multivalue
@@ -65,7 +76,10 @@ class SolrIndex
                 rec[sort] = rec[sort][0] 
               end
             end
-            rec_set << rec.to_json
+	    if rec['pub_date']
+              rec['pub_date_sort'] = rec['pub_date'][0]
+	    end
+            rec_set << rec
             if rec_set.count % chunk_size == 0
               self.insert rec_set
               rec_set = []
@@ -81,9 +95,8 @@ class SolrIndex
         end
       end
     end
-    self.recs_modified_after(@last_updated).each { |r| queue << r }
     thread_pool.map(&:join)
-    return recs.count
+    return true 
   end
 
   def recs_modified_after(start_time)
