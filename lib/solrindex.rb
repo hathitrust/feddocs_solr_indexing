@@ -50,7 +50,6 @@ class SolrIndex
     queue = Queue.new
     count = 0
     self.recs_modified_after(@last_updated).each do |r|
-    open('missing_regids.txt').each do | l |
       queue << r['registry_id'] 
     end
 
@@ -76,9 +75,9 @@ class SolrIndex
                 rec[sort] = rec[sort][0] 
               end
             end
-	    if rec['pub_date']
+            if rec['pub_date']
               rec['pub_date_sort'] = rec['pub_date'][0]
-	    end
+            end
             rec_set << rec
             if rec_set.count % chunk_size == 0
               self.insert rec_set
