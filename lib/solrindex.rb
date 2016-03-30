@@ -95,7 +95,7 @@ class SolrIndex
       end
     end
     thread_pool.map(&:join)
-    return true 
+    return count 
   end
 
   def recs_modified_after(start_time)
