@@ -48,10 +48,10 @@ class SolrIndex
   def update
     @update_start_time = Time.now
     queue = Queue.new
-    count = 0
     self.recs_modified_after(@last_updated).each do |r|
       queue << r['registry_id'] 
     end
+    count =  queue.length
 
     thread_pool = (0...4).map do 
       Thread.new do
