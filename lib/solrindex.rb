@@ -49,6 +49,7 @@ class SolrIndex
     @update_start_time = Time.now
     queue = Queue.new
     self.recs_modified_after(@last_updated).each do |r|
+      #puts r['registry_id']
       queue << r['registry_id'] 
     end
     count =  queue.length
