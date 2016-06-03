@@ -26,9 +26,14 @@ class SolrIndex
         raise "400"
       elsif resp.status == "200"
         PP.pp resp
-	STDOUT.flush
+        STDOUT.flush
       end
       return resp
+    rescue Errno::ECONNREFUSED => e
+      puts e.message 
+      PP.pp documents.collect {|s| s['registry_id'] }
+      STDOUT.flush
+      exit
     rescue => error
       PP.pp error
       PP.pp documents.collect {|s| s['registry_id'] }
