@@ -57,7 +57,7 @@ class SolrIndex
       #puts r['registry_id']
       queue << r['registry_id'] 
     end
-    count =  queue.length
+    reg_count =  queue.length
 
     thread_pool = (0...4).map do 
       Thread.new do
@@ -101,7 +101,7 @@ class SolrIndex
       end
     end
     thread_pool.map(&:join)
-    return count 
+    return reg_count
   end
 
   def recs_modified_after(start_time)
