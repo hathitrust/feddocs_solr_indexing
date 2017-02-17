@@ -62,29 +62,44 @@ class SolrIndex
     thread_pool = (0...4).map do 
       Thread.new do
         begin 
-          chunk_size = 10
+          chunk_size = 30
           rec_set = []
           chunk = ''
           mc = Mongo::Client.new([@mongo_uri], :database => ENV['mongo_db'])
           while !queue.empty?
             rec_id = queue.pop
             rec = mc[:registry].find({"registry_id" => rec_id }).first
-            rec['source_records'] = mc[:source_records].find({"source_id" => 
-                                                   {'$in' => rec['source_record_ids']}}
-                                                 ).collect {|s| s['source'].to_json }
-            rec['marc_display'] = rec['source_records'][0]
-            rec['id'] = rec['registry_id']
-            rec.delete("_id")
-            #the sorts can't be multivalue
-            ['author_sort', 'pub_date_sort', 'title_sort'].each do | sort |
-              if rec[sort] 
-                rec[sort] = rec[sort][0] 
+
+            # it has been deprecated
+            if rec['suppressed'] or !rec['deprecated_timestamp'].nil?
+              # update the deprecated_timestamp, suppressed, deprecated_reason, and successors fields
+              doc = {"id":rec['registry_id'], 
+                      "deprecated_timestamp":{"set":rec['deprecated_timestamp']},
+                      "suppressed":{"set":rec['suppressed']},
+                      "deprecated_reason":{"set":rec['deprecated_reason']},
+                      "successors":{"set":rec['successors']}
+                    }
+              rec_set << doc
+              #resp = @client.post @solr_uri, doc.to_json, "content-type"=>"application/json"
+              #puts "deprecated: #{rec['registry_id']}"
+            else
+              rec['source_records'] = mc[:source_records].find({"source_id" => 
+                                                     {'$in' => rec['source_record_ids']}}
+                                                   ).collect {|s| s['source'].to_json }
+              rec['marc_display'] = rec['source_records'][0]
+              rec['id'] = rec['registry_id']
+              rec.delete("_id")
+              #the sorts can't be multivalue
+              ['author_sort', 'pub_date_sort', 'title_sort'].each do | sort |
+                if rec[sort] 
+                  rec[sort] = rec[sort][0] 
+                end
               end
-            end
-            if rec['pub_date']
-              rec['pub_date_sort'] = rec['pub_date'][0]
-            end
-            rec_set << rec
+              if rec['pub_date']
+                rec['pub_date_sort'] = rec['pub_date'][0]
+              end
+              rec_set << rec
+            end 
             if rec_set.count % chunk_size == 0
               self.insert rec_set
               rec_set = []
