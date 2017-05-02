@@ -15,6 +15,22 @@ RSpec.describe SolrIndex, "#client" do
 
 end
 
+RSpec.describe SolrIndex, "document" do
+  it "gets a document by id" do
+    id = "ee5efb31-5c36-4f2b-8a0f-5b9709b021b7"
+    si = SolrIndex.new(ENV['solr_host'], 9034 )
+    doc = si.document(id)
+    expect(doc["pub_date"][0]).to eq('1998')
+  end
+
+  it "gets one field from a document" do 
+    id = "ee5efb31-5c36-4f2b-8a0f-5b9709b021b7"
+    si = SolrIndex.new(ENV['solr_host'], 9034 )
+    doc = si.document(id, "pub_date")
+    expect(doc["pub_date"][0]).to eq('1998')
+  end
+end  
+
 RSpec.describe SolrIndex, "insert" do
   it "inserts new documents" do
     test_id = SecureRandom.uuid()
@@ -30,7 +46,9 @@ RSpec.describe SolrIndex, "insert" do
                             :database => ENV['mongo_db'])
     db['registry'].find().limit(1).each do | rec |
       si = SolrIndex.new( ENV['solr_host'], 9034 )
-      resp = si.insert( [rec.to_json] )
+      rec['id'] = rec['registry_id']
+      rec.delete("_id")
+      resp = si.insert( [rec] )
       expect(resp.status_code).to eq 200
     end
   end

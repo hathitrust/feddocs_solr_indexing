@@ -123,6 +123,12 @@ class SolrIndex
     recs = @mc[:registry].find({"last_modified" => {'$gt' => start_time}})
     return recs
   end
-     
+
+  def document(reg_id, fl="*" )  
+    solr_uri = "http://#{@host}:#{@port}/usfeddocs/collection1/select?id=#{reg_id}&fl=#{fl}&wt=json&qt=document"
+    resp = @client.get solr_uri
+    JSON.parse(resp.body)["response"]["docs"][0]
+  end
+    
 end
 
