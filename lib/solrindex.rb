@@ -31,12 +31,12 @@ class SolrIndex
       return resp
     rescue Errno::ECONNREFUSED => e
       puts e.message 
-      PP.pp documents.collect {|s| s['registry_id'] }
+      PP.pp documents.collect {|s| s['id'] }
       STDOUT.flush
       exit
     rescue => error
       PP.pp error
-      PP.pp documents.collect {|s| s['registry_id'] }
+      PP.pp documents.collect {|s| s['id'] }
       PP.pp resp
       STDOUT.flush
       sleep(1)
