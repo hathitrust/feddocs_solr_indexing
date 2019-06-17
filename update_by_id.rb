@@ -4,7 +4,7 @@ require 'dotenv'
 require_relative 'lib/solrindex'
 Dotenv.load
 
-si = SolrIndex.new( ENV['solr_host'], 9035 )
+si = SolrIndex.new( ENV['solr_host'], 9033 )
 @mongo_uri = ENV['mongo_host']+':'+ENV['mongo_port']
 
 num_updated = 0

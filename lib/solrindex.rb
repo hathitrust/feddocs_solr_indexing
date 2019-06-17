@@ -16,6 +16,11 @@ class SolrIndex
     @port = port
     @solr_uri = "http://#{@host}:#{@port}#{ENV['solr_path']}"
     @last_updated = self.get_last_updated 
+    # temporarily get records that are missing
+    # @current_recs = []
+    # File.open("/l1/govdocs/solr_indexing/registry_ids_currently_in_index.txt").each do |line|
+    #   @current_recs << line.chomp
+    # end
   end
 
   def insert(documents)
@@ -54,6 +59,7 @@ class SolrIndex
     @update_start_time = Time.now
     queue = Queue.new
     self.recs_modified_after(@last_updated).each do |r|
+      # next if @current_recs.include? r['registry_id']
       #puts r['registry_id']
       queue << r['registry_id'] 
     end
@@ -73,6 +79,9 @@ class SolrIndex
             # it has been deprecated
             if rec['suppressed'] or !rec['deprecated_timestamp'].nil?
               # update the deprecated_timestamp, suppressed, deprecated_reason, and successors fields
+              if rec['deprecated_timestamp']
+                rec['deprecated_timestamp'] = rec['deprecated_timestamp'].to_s.sub(/ UTC/, 'Z').sub(/ /, 'T')
+              end
               doc = {"id":rec['registry_id'], 
                       "deprecated_timestamp":{"set":rec['deprecated_timestamp']},
                       "suppressed":{"set":rec['suppressed']},
@@ -86,8 +95,9 @@ class SolrIndex
               rec['source_records'] = mc[:source_records].find({"source_id" => 
                                                      {'$in' => rec['source_record_ids']}}
                                                    ).collect {|s| s['source'].to_json }
-              rec['marc_display'] = rec['source_records'][0]
+              rec['marc'] = rec['source_records'][0]
               rec['id'] = rec['registry_id']
+               
               rec.delete("_id")
               #the sorts can't be multivalue
               ['author_sort', 'pub_date_sort', 'title_sort'].each do | sort |
@@ -121,6 +131,8 @@ class SolrIndex
 
   def recs_modified_after(start_time)
     recs = @mc[:registry].find({"last_modified" => {'$gt' => start_time}})
+    #recs = @mc[:registry].find({"oclc" => 1286390})
+    #recs = @mc[:registry].find({})
     return recs
   end
 
