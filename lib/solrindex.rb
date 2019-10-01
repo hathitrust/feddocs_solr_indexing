@@ -27,9 +27,10 @@ class SolrIndex
     begin
       #chunk = '['+documents.join(',')+']'
       resp = @client.post @solr_uri, documents.to_json, "content-type"=>"application/json"
-      if resp.status == "400"
-        raise "400"
-      elsif resp.status == "200"
+      puts "status code:#{resp.status_code}"
+      if resp.status_code == "400" or resp.status_code == "404"
+        raise resp.status_code 
+      elsif resp.status_code == "200"
         PP.pp resp
         STDOUT.flush
       end
