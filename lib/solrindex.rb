@@ -69,14 +69,14 @@ class SolrIndex
     self.recs_modified_after(@last_updated).each do |r|
       # next if @current_recs.include? r['registry_id']
       puts r['registry_id']
-      queue << regid #r['registry_id'] 
+      queue << r['registry_id'] 
     end
     reg_count =  queue.length
 
     thread_pool = (0...4).map do 
       Thread.new do
         begin 
-          chunk_size = 1
+          chunk_size = 10
           rec_set = []
           chunk = ''
           mc = Mongo::Client.new([@mongo_uri], :database => ENV['mongo_db'])
