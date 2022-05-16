@@ -29,8 +29,8 @@ class SolrIndex
       resp = @client.post @solr_uri, documents.to_json, "content-type"=>"application/json"
       puts "status code:#{resp.status_code}"
       if resp.status_code == 400 or resp.status_code == 404
-        PP.pp documents.collect {|s| s['id']}
-        STDOUT.flush
+        #PP.pp documents.collect {|s| s['id']}
+        #STDOUT.flush
         raise resp.status_code.to_s
       elsif resp.status_code == 200
         STDOUT.flush
@@ -68,7 +68,7 @@ class SolrIndex
     queue = Queue.new
     self.recs_modified_after(@last_updated).each do |r|
       # next if @current_recs.include? r['registry_id']
-      puts r['registry_id']
+      #puts r['registry_id']
       queue << r['registry_id'] 
     end
     reg_count =  queue.length
